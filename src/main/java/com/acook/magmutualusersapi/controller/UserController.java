@@ -1,18 +1,19 @@
 package com.acook.magmutualusersapi.controller;
 
+import com.acook.magmutualusersapi.dto.CreateUserRequest;
 import com.acook.magmutualusersapi.entity.User;
 import com.acook.magmutualusersapi.repository.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.acook.magmutualusersapi.spec.UserSpecification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.time.LocalDate;
 import java.util.Optional;
 
 @Controller
@@ -36,9 +37,58 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
-        List<User> allUsers = userRepository.findAll();
+    public ResponseEntity<Page<User>> getAllUsers(
+            // Search covers firstName, lastName, and email
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String profession,
+            @RequestParam(required = false) String country,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) LocalDate startDate,
+            @RequestParam(required = false) LocalDate endDate,
+            @RequestParam(defaultValue = "lastName") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDirection,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+
+        Sort sort = sortDirection.equalsIgnoreCase("asc") ?
+                Sort.by(sortBy).ascending() :
+                Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Specification<User> spec = UserSpecification.filterUsers(search, profession, country, city, startDate, endDate);
+
+        Page<User> allUsers = userRepository.findAll(spec, pageable);
 
         return ResponseEntity.ok(allUsers);
+    }
+
+    @PostMapping
+    public ResponseEntity<User> createUser(@RequestBody CreateUserRequest userRequest) {
+        User userToCreate = new User(
+                userRequest.firstName(),
+                userRequest.lastName(),
+                userRequest.email(),
+                userRequest.profession(),
+                userRequest.country(),
+                userRequest.city()
+        );
+
+        User createdUser = userRepository.save(userToCreate);
+
+        // Semantically should we return a 201?
+        return ResponseEntity.ok(createdUser);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        Optional<User> userToDelete = userRepository.findById(id);
+        if (userToDelete.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        userRepository.deleteById(id);
+
+        return ResponseEntity.noContent().build();
     }
 }

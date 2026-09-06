@@ -42,8 +42,9 @@ public class V2__seed_users extends BaseJavaMigration {
             statement.executeBatch();
         }
 
+        // Reset autoincrement start based on largest id in csv dataset
         try (Statement maxIDStatement = context.getConnection().createStatement()) {
-            maxIDStatement.execute(String.format("ALTER TABLE project_user ALTER COLUMN id RESTART WITH %s", maxId));
+            maxIDStatement.execute(String.format("ALTER TABLE project_user ALTER COLUMN id RESTART WITH %s", maxId + 1));
         }
     }
 }
