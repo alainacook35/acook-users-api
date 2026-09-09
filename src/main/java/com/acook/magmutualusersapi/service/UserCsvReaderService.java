@@ -1,6 +1,6 @@
 package com.acook.magmutualusersapi.service;
 
-import com.acook.magmutualusersapi.entity.User;
+import com.acook.magmutualusersapi.entity.CsvUser;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
@@ -18,15 +18,15 @@ public class UserCsvReaderService {
         this.filePath = filePath;
     }
 
-    public List<User> readUsers() throws IOException {
+    public List<CsvUser> readUsers() throws IOException {
         InputStream inputStream = new ClassPathResource(filePath).getInputStream();
 
         CsvMapper mapper = new CsvMapper();
         mapper.registerModule(new JavaTimeModule());
         CsvSchema schema = CsvSchema.emptySchema().withHeader();
 
-        MappingIterator<User> iterator = mapper
-                .readerFor(User.class)
+        MappingIterator<CsvUser> iterator = mapper
+                .readerFor(CsvUser.class)
                 .with(schema)
                 .readValues(inputStream);
 

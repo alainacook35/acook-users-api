@@ -5,19 +5,21 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 import java.time.LocalDate;
 
-@Entity
+/**
+ * Bridge object for converting from all lower column names to camel case without affecting API return types
+ */
+@JsonPropertyOrder({"id", "firstname", "lastname", "email", "profession", "dateCreated", "country", "city"})
 // user is a reserved name so we must use something else
-@Table(name="project_user")
-@JsonPropertyOrder({"id", "firstName", "lastName", "email", "profession", "dateCreated", "country", "city"})
-public class User {
+public class CsvUser {
     @GeneratedValue(strategy = GenerationType.IDENTITY) @Id
     private Long id;
+    @JsonProperty("firstname")
     private String firstName;
+    @JsonProperty("lastname")
     private String lastName;
     private String email;
     private String profession;
@@ -26,9 +28,9 @@ public class User {
     private LocalDate dateCreated;
 
     // Should we have an empty constructor at all?
-    public User() {}
+    public CsvUser() {}
 
-    public User(Long id, String firstName, String lastName, String email, String profession, String country, String city, LocalDate dateCreated) {
+    public CsvUser(Long id, String firstName, String lastName, String email, String profession, String country, String city, LocalDate dateCreated) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -39,7 +41,7 @@ public class User {
         this.dateCreated = dateCreated;
     }
 
-    public User(String firstName, String lastName, String email, String profession, String country, String city) {
+    public CsvUser(String firstName, String lastName, String email, String profession, String country, String city) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
@@ -102,13 +104,6 @@ public class User {
 
     public LocalDate getDateCreated() {
         return dateCreated;
-    }
-
-    @PrePersist
-    private void onCreate() {
-        if (dateCreated == null) {
-            dateCreated = LocalDate.now();
-        }
     }
 
 }

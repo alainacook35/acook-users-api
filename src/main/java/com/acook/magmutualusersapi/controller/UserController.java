@@ -18,6 +18,7 @@ import java.util.Optional;
 
 @Controller
 @RequestMapping("/users")
+@CrossOrigin(origins = "http://localhost:5173")
 public class UserController {
 
     private final UserRepository userRepository;
@@ -30,10 +31,8 @@ public class UserController {
     public ResponseEntity<User> getUser(@PathVariable Long id) {
         Optional<User> user = userRepository.findById(id);
 
-        if (user.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.of(user);
+        return user.map(value -> ResponseEntity.ok().body(value))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping
@@ -60,7 +59,7 @@ public class UserController {
 
         Page<User> allUsers = userRepository.findAll(spec, pageable);
 
-        return ResponseEntity.ok(allUsers);
+        return ResponseEntity.ok().body(allUsers);
     }
 
     @PostMapping
@@ -76,13 +75,13 @@ public class UserController {
 
         User createdUser = userRepository.save(userToCreate);
 
-        // Semantically should we return a 201?
-        return ResponseEntity.ok(createdUser);
+        return ResponseEntity.ok().body(createdUser);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         Optional<User> userToDelete = userRepository.findById(id);
+
         if (userToDelete.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
