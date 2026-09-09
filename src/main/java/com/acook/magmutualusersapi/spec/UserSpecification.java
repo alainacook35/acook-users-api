@@ -50,19 +50,35 @@ public class UserSpecification {
         return userSpecification;
     }
 
+    private static final char LIKE_ESCAPE_CHAR = '\\';
+
+    /**
+     * Escapes LIKE wildcard characters (% and _) in a raw search term so they're matched literally
+     * instead of being interpreted as SQL wildcards.
+     */
+    private static String escapeLike(String searchTerm) {
+        return searchTerm
+                .replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_");
+    }
+
     private static Specification<User> likeFirstName(String searchTerm) {
+        String escaped = escapeLike(searchTerm);
         return (root, query, criteriaBuilder) ->
-                criteriaBuilder.like(criteriaBuilder.lower(root.get("firstName")), "%" + searchTerm + "%");
+                criteriaBuilder.like(criteriaBuilder.lower(root.get("firstName")), "%" + escaped + "%", LIKE_ESCAPE_CHAR);
     }
 
     private static Specification<User> likeLastName(String searchTerm) {
+        String escaped = escapeLike(searchTerm);
         return (root, query, criteriaBuilder) ->
-                criteriaBuilder.like(criteriaBuilder.lower(root.get("lastName")), "%" + searchTerm + "%");
+                criteriaBuilder.like(criteriaBuilder.lower(root.get("lastName")), "%" + escaped + "%", LIKE_ESCAPE_CHAR);
     }
 
     private static Specification<User> likeEmail(String searchTerm) {
+        String escaped = escapeLike(searchTerm);
         return (root, query, criteriaBuilder) ->
-                criteriaBuilder.like(criteriaBuilder.lower(root.get("email")), "%" + searchTerm + "%");
+                criteriaBuilder.like(criteriaBuilder.lower(root.get("email")), "%" + escaped + "%", LIKE_ESCAPE_CHAR);
     }
 
     /**
@@ -74,7 +90,7 @@ public class UserSpecification {
      */
     private static Specification<User> hasProfession(String profession) {
         return (root, query, criteriaBuilder) ->
-                criteriaBuilder.equal(root.get("profession"), profession);
+                criteriaBuilder.equal(criteriaBuilder.lower(root.get("profession")), profession.toLowerCase());
     }
 
     /**
@@ -86,7 +102,7 @@ public class UserSpecification {
      */
     private static Specification<User> hasCountry(String country) {
         return (root, query, criteriaBuilder) ->
-                criteriaBuilder.equal(root.get("country"), country);
+                criteriaBuilder.equal(criteriaBuilder.lower(root.get("country")), country.toLowerCase());
     }
 
     /**
@@ -98,7 +114,7 @@ public class UserSpecification {
      */
     private static Specification<User> hasCity(String city) {
         return (root, query, criteriaBuilder) ->
-                criteriaBuilder.equal(root.get("city"), city);
+                criteriaBuilder.equal(criteriaBuilder.lower(root.get("city")), city.toLowerCase());
     }
 
     private static Specification<User> hasStartDate(LocalDate startDate) {

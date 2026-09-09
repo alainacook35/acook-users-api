@@ -9,6 +9,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -44,17 +46,8 @@ public class UserController {
             @RequestParam(required = false) String city,
             @RequestParam(required = false) LocalDate startDate,
             @RequestParam(required = false) LocalDate endDate,
-            @RequestParam(defaultValue = "lastName") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDirection,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @PageableDefault(sort = "lastName") Pageable pageable
     ) {
-
-        Sort sort = sortDirection.equalsIgnoreCase("asc") ?
-                Sort.by(sortBy).ascending() :
-                Sort.by(sortBy).descending();
-
-        Pageable pageable = PageRequest.of(page, size, sort);
         Specification<User> spec = UserSpecification.filterUsers(search, profession, country, city, startDate, endDate);
 
         Page<User> allUsers = userRepository.findAll(spec, pageable);
@@ -80,13 +73,11 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        Optional<User> userToDelete = userRepository.findById(id);
-
-        if (userToDelete.isEmpty()) {
+        try {
+            userRepository.deleteById(id);
+        } catch (EmptyResultDataAccessException e) {
             return ResponseEntity.notFound().build();
         }
-
-        userRepository.deleteById(id);
 
         return ResponseEntity.noContent().build();
     }
